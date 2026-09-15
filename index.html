@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>LOOPCAM // gesture interface</title>
+    <meta name="description" content="Your hands are the interface. A sci-fi webcam playground driven entirely by hand gestures." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles/main.css" />
+  </head>
+  <body>
+    <div id="stage">
+      <video id="feed" playsinline autoplay muted></video>
+      <canvas id="fx"></canvas>
+      <canvas id="hud"></canvas>
+      <div id="grade" aria-hidden="true"></div>
+
+      <!-- boot / permission / error live here, above everything -->
+      <div id="overlay">
+        <section id="boot" class="pane">
+          <pre id="boot-log"></pre>
+          <button id="boot-start" type="button" hidden>
+            <span>▶ INITIALIZE OPTICS</span>
+            <em>grants camera access · nothing leaves this machine</em>
+          </button>
+        </section>
+
+        <section id="fault" class="pane" hidden>
+          <h1>OPTICAL LINK SEVERED</h1>
+          <p id="fault-msg"></p>
+          <button id="fault-retry" type="button"><span>⟲ RETRY</span></button>
+        </section>
+      </div>
+
+      <div id="cheats" hidden>
+        <h2>GESTURE CODEX</h2>
+        <ul id="cheats-list"></ul>
+        <p class="hint">? codex &nbsp;·&nbsp; D diagnostics &nbsp;·&nbsp; C clear paint &nbsp;·&nbsp; F fullscreen</p>
+      </div>
+    </div>
+
+    <noscript>LoopCam needs JavaScript and a webcam.</noscript>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

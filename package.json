@@ -1,0 +1,22 @@
+{
+  "name": "loopcam",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Gesture-driven sci-fi webcam playground. Your hands are the interface.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "assets": "node scripts/fetch-assets.mjs",
+    "postinstall": "node scripts/fetch-assets.mjs"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^1.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
+  }
+}
