@@ -33,12 +33,12 @@ export class ParticleField {
     this.hue = new Float32Array(count)
     this.life = new Float32Array(count)
     this.seed = new Float32Array(count)
-    for (let i = 0; i < count; i++) this.spawn(i, w, h, true)
+    for (let i = 0; i < count; i++) this.spawn(i, w, h)
   }
 
-  private spawn(i: number, w: number, h: number, anywhere = false) {
+  private spawn(i: number, w: number, h: number) {
     this.x[i] = rand(0, w)
-    this.y[i] = anywhere ? rand(0, h) : rand(0, h)
+    this.y[i] = rand(0, h)
     const a = rand(0, TAU)
     const s = rand(4, 22)
     this.vx[i] = Math.cos(a) * s

@@ -45,13 +45,11 @@ export function createPortal(field: ParticleField): Mode {
 
     enter() { armed = true; lock = 0; blips.up() },
 
-    exit(frame) {
+    exit() {
       armed = false
       lock = 0
       // Remember where it died so the implosion plays out in the right place.
-      if (radius > 20 && frame.hands.length) {
-        implode = 1
-      }
+      if (radius > 20) implode = 1
       blips.down()
     },
 

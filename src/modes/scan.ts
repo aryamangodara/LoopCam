@@ -43,7 +43,13 @@ export function createScan(stage: Stage): Mode {
     priority: 30,
 
     matches(frame) {
-      return frame.hands.some((h) => isFingerGun(h.f) && (armed ? h.f.extended[1] : h.f.fingerCount === 1))
+      // Engaged, the middle finger creeping out shouldn't kill the sweep — hold on
+      // "index still out, ring and pinky still curled" instead of the strict gun shape.
+      return frame.hands.some((h) =>
+        armed
+          ? h.f.extended[1] && !h.f.extended[3] && !h.f.extended[4]
+          : isFingerGun(h.f),
+      )
     },
 
     enter() {

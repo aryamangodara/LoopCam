@@ -66,6 +66,7 @@ export class HandTracker {
    * value smoothly closes the gap between detections — no explicit interpolation needed.
    */
   start() {
+    if (this.detachFrameCb) return
     const video = this.stage.video
     const anyVideo = video as HTMLVideoElement & {
       requestVideoFrameCallback?: (cb: () => void) => number

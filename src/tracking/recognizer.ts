@@ -37,7 +37,11 @@ export class Latch {
     this.streak++
 
     if (!this.on) {
-      if (this.cooling > 0) return null
+      if (this.cooling > 0) {
+        // Don't bank streak while cooling, or the debounce is spent the moment it ends.
+        this.streak = 0
+        return null
+      }
       if (this.streak >= this.enterFrames) {
         this.on = true
         this.streak = 0
