@@ -124,12 +124,15 @@ export class HandTracker {
     const next: Partial<Record<Handedness, RawHand>> = {}
     for (let i = 0; i < res.landmarks.length; i++) {
       const cat = res.handednesses[i]?.[0]
-      // MediaPipe labels handedness in the *unmirrored* frame. The user sees a mirror,
-      // so the hand they call "right" is labelled Left here — flip it to match intuition.
-      const raw = cat?.categoryName === 'Left' ? 'Right' : 'Left'
-      const handedness: Handedness = raw
-      // If both detections land on the same label, park the second on the free slot.
-      const key: Handedness = next[handedness] ? (handedness === 'Left' ? 'Right' : 'Left') : handedness
+      // Do NOT flip this. MediaPipe's handedness is already stated in selfie terms —
+      // it answers "which of the operator's hands is this", not "which side of the raw
+      // sensor image is it on" — and the operator is looking at a mirrored view, so the
+      // label already matches the hand they think they are holding up. Swapping it here
+      // (as this did) inverted both labels.
+      const label: Handedness = cat?.categoryName === 'Left' ? 'Left' : 'Right'
+      // Two detections can carry the same label when the model is unsure; park the
+      // second one on the free slot rather than dropping it.
+      const key: Handedness = next[label] ? (label === 'Left' ? 'Right' : 'Left') : label
       if (next[key]) continue
       next[key] = { handedness: key, score: cat?.score ?? 0, lm: res.landmarks[i] as RawHand['lm'] }
     }
