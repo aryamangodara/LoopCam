@@ -18,7 +18,7 @@ const SCRIPT: Line[] = [
   { text: 'mounting /dev/optics ................. ', cls: 'ok', wait: 180 },
   { text: 'loading hand_landmarker.task ......... ', cls: 'ok', wait: 260 },
   { text: 'calibrating gesture lattice .......... ', cls: 'ok', wait: 200 },
-  { text: 'particle substrate: 2000 nodes ....... ', cls: 'ok', wait: 180 },
+  { text: 'particle substrate: adaptive ......... ', cls: 'ok', wait: 180 },
   { text: 'uplink: none. all processing is local. ', cls: 'warn', wait: 320 },
   { text: '', wait: 120 },
   { text: 'OPTICAL SENSOR REQUIRES OPERATOR CONSENT.', wait: 0 },

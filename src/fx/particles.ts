@@ -12,7 +12,10 @@ import { clamp, rand, TAU } from '../core/math'
 const BUCKETS = 6
 
 export class ParticleField {
+  /** Allocated capacity. */
   readonly n: number
+  /** How many are actually simulated and drawn — moved by the quality governor. */
+  live: number
   private x: Float32Array
   private y: Float32Array
   private vx: Float32Array
@@ -24,8 +27,9 @@ export class ParticleField {
   /** Global brightness — modes raise it while they're doing something with the field. */
   energy = 0.25
 
-  constructor(count = 2000, w = 1920, h = 1080) {
+  constructor(count = 1400, w = 1920, h = 1080) {
     this.n = count
+    this.live = count
     this.x = new Float32Array(count)
     this.y = new Float32Array(count)
     this.vx = new Float32Array(count)
@@ -51,7 +55,7 @@ export class ParticleField {
   /** Radial push away from (px, py). Falls off smoothly to nothing at `radius`. */
   repel(px: number, py: number, strength: number, radius: number) {
     const r2 = radius * radius
-    for (let i = 0; i < this.n; i++) {
+    for (let i = 0; i < this.live; i++) {
       const dx = this.x[i] - px
       const dy = this.y[i] - py
       const d2 = dx * dx + dy * dy
@@ -69,7 +73,7 @@ export class ParticleField {
   /** Pull toward (px, py) with a tangential component, so particles spiral instead of collapsing. */
   attract(px: number, py: number, strength: number, radius: number, swirl = 1) {
     const r2 = radius * radius
-    for (let i = 0; i < this.n; i++) {
+    for (let i = 0; i < this.live; i++) {
       const dx = px - this.x[i]
       const dy = py - this.y[i]
       const d2 = dx * dx + dy * dy
@@ -86,7 +90,7 @@ export class ParticleField {
 
   /** Push everything out of a ring's interior — the portal's pressure wave. */
   shockwave(px: number, py: number, radius: number, strength: number) {
-    for (let i = 0; i < this.n; i++) {
+    for (let i = 0; i < this.live; i++) {
       const dx = this.x[i] - px
       const dy = this.y[i] - py
       const d = Math.hypot(dx, dy) || 1
@@ -101,7 +105,7 @@ export class ParticleField {
 
   step(dt: number, w: number, h: number, t: number) {
     const drag = Math.exp(-1.35 * dt)
-    for (let i = 0; i < this.n; i++) {
+    for (let i = 0; i < this.live; i++) {
       // A slow curl keeps the idle field alive instead of settling into stillness.
       const s = this.seed[i]
       this.vx[i] += Math.sin(this.y[i] * 0.004 + t * 0.35 + s) * 5 * dt
@@ -131,7 +135,7 @@ export class ParticleField {
     for (let b = 0; b < BUCKETS; b++) {
       ctx.beginPath()
       let drew = false
-      for (let i = b; i < this.n; i += BUCKETS) {
+      for (let i = b; i < this.live; i += BUCKETS) {
         const l = this.life[i]
         if (l < 0.06) continue
         const sx = this.x[i]
@@ -144,7 +148,7 @@ export class ParticleField {
       }
       if (!drew) continue
       // One representative hue per bucket keeps this to a single stroke call.
-      const h = this.hue[b * ((this.n / BUCKETS) | 0)] ?? 194
+      const h = this.hue[b * ((this.live / BUCKETS) | 0)] ?? 194
       ctx.strokeStyle = hsla(h, 100, 72, clamp(0.16 + this.energy * 0.5, 0, 0.8))
       ctx.lineWidth = 1.35
       ctx.stroke()

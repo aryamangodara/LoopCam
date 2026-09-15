@@ -19,10 +19,19 @@ export interface HudState {
   activeLabel: string
   heldFor: number
   soundOn: boolean
+  quality: string
+  particles: number
 }
 
 /** Per-hand animation state that has to persist between frames. */
 const spin = new Map<number, number>()
+
+/**
+ * Telemetry strings are rebuilt a few times a second rather than every frame. Canvas
+ * caches shaped text per (string, font), so a counter that changes every frame is a
+ * guaranteed cache miss — and text shaping is one of the more expensive 2D ops.
+ */
+const readout = { at: -1, top: '', bottom: '' }
 
 export function drawHud(frame: Frame, modes: Mode[], state: HudState) {
   drawFrameFurniture(frame.hud, frame.w, frame.h, frame.t)
@@ -183,18 +192,16 @@ function drawTelemetry(frame: Frame, state: HudState) {
   ctx.fillStyle = hsla(hue, 100, 72, 0.85)
   ctx.fillRect(bx, by, 120 * load, 4)
 
+  if (frame.t - readout.at > 0.2) {
+    readout.at = frame.t
+    readout.top = `${state.fps.toFixed(0)} FPS · DETECT ${state.detectMs.toFixed(1)}ms · DRAW ${state.renderMs.toFixed(1)}ms · ${state.delegate}`
+    readout.bottom = `${frame.hands.length} HAND${frame.hands.length === 1 ? '' : 'S'} · ${state.activeLabel} · ${state.quality} ${state.particles}p${state.soundOn ? ' · AUDIO' : ''}`
+  }
+
   ctx.font = '9.5px "Share Tech Mono", monospace'
   ctx.fillStyle = hsla(188, 100, 78, 0.55)
-  ctx.fillText(
-    `${state.fps.toFixed(0)} FPS · DETECT ${state.detectMs.toFixed(1)}ms · DRAW ${state.renderMs.toFixed(1)}ms · ${state.delegate}`,
-    bx,
-    by - 8,
-  )
-  ctx.fillText(
-    `${frame.hands.length} HAND${frame.hands.length === 1 ? '' : 'S'} TRACKED · ${state.activeLabel}${state.soundOn ? ' · AUDIO ON' : ''}`,
-    bx,
-    by + 18,
-  )
+  ctx.fillText(readout.top, bx, by - 8)
+  ctx.fillText(readout.bottom, bx, by + 18)
 
   ctx.textAlign = 'right'
   ctx.fillStyle = hsla(188, 100, 70, 0.35)

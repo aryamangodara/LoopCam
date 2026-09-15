@@ -56,13 +56,13 @@ frame can't steal a stroke mid-air.
 ## How it works
 
 ```
-camera → HandLandmarker (30fps) → One Euro filter → features → latches → mode registry → canvas
+camera → HandLandmarker (24Hz) → One Euro filter → features → latches → mode registry → canvas
 ```
 
 A few decisions carry most of the feel:
 
-- **Detection is decoupled from rendering.** The model runs on real camera frames via
-  `requestVideoFrameCallback` (~30 fps) while the render loop runs at rAF (~60 fps). The One
+- **Detection is decoupled from rendering.** The model runs on camera frames via
+  `requestVideoFrameCallback`, throttled to 24 Hz, while the render loop runs at rAF (~60 fps). The One
   Euro filters are ticked every render frame, so repeatedly feeding them the latest detection
   smoothly closes the gap — interpolation for free, and no stutter against the video.
 - **Mirroring happens in exactly one place** (`Stage.project`). The video is CSS-flipped;
@@ -79,6 +79,36 @@ Press `D`. The diagnostics panel shows every scalar the gesture tests read — p
 facing, speed, per-finger extension — as live bars, plus which latches are currently satisfied.
 Thresholds are judgement calls about human hands; tune them by watching those bars move, not by
 guessing constants and reloading.
+
+## Performance
+
+Two different things can feel slow, and the HUD tells you which:
+
+- **First load is slow, once.** The MediaPipe wasm runtime (~12 MB) and the hand model
+  (~8 MB) are served uncompressed by the dev server. That is a one-time cost — the browser
+  caches both, and reloads are instant.
+- **Low frame rate.** Read the bottom-left readout: `FPS · DETECT ms · DRAW ms · GPU|CPU`.
+  `DETECT` is the hand model, `DRAW` is everything this app draws. Whichever is larger is
+  where your time is going, and if it says `CPU` the WebGL delegate was refused and the
+  model is running on a core — that alone can cost 40 ms a frame.
+
+The app governs itself. `Quality` (`src/core/quality.ts`) watches the frame rate and, when it
+drops under ~46 fps, sheds load in order: particle count, then the ambient horizon grid, then
+detection rate, then the video colour grade. It recovers in half-steps after a sustained run
+above 57 fps, so it settles instead of oscillating. The current tier shows in the readout as
+`HIGH` / `MED` / `LOW` alongside the live particle count.
+
+Three fixed decisions matter as much as the governor:
+
+- **The fx canvas is capped at ~1080p of backing store regardless of DPR.** It draws nothing
+  but soft additive glow, which gains nothing from device pixels and costs 4x the fill at
+  DPR 2. Only the HUD, which draws text, gets the full ratio.
+- **No `mix-blend-mode` anywhere.** A full-viewport blended layer forces the compositor to
+  re-blend the entire stack beneath it — video plus both canvases — every frame. The same
+  look comes out of plain alpha compositing for free.
+- **Detection runs at 24 Hz, not 60.** `detectForVideo` is synchronous and blocks the main
+  thread, so its rate is a direct tax on rendering. The One Euro filters smooth across the
+  gaps, so the hands still track at full frame rate.
 
 ## Layout
 

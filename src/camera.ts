@@ -41,7 +41,7 @@ export async function startCamera(video: HTMLVideoElement): Promise<MediaStream>
   let stream: MediaStream
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+      video: { width: { ideal: 960 }, height: { ideal: 540 }, facingMode: 'user' },
       audio: false,
     })
   } catch (err) {

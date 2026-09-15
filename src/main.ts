@@ -1,5 +1,6 @@
 import { Stage } from './core/stage'
 import { Loop } from './core/loop'
+import { Quality } from './core/quality'
 import type { Frame, Mode } from './core/types'
 import { CameraError, startCamera } from './camera'
 import { HandTracker } from './tracking/handTracker'
@@ -89,7 +90,8 @@ async function ignite() {
 }
 
 function run(stage: Stage, tracker: HandTracker) {
-  const field = new ParticleField(2000, stage.w, stage.h)
+  const quality = new Quality()
+  const field = new ParticleField(1400, stage.w, stage.h)
   const trails = new TrailField()
 
   // Order matters twice over: `priority` decides who wins a contested frame, and array
@@ -120,7 +122,14 @@ function run(stage: Stage, tracker: HandTracker) {
       hud: stage.hud,
     }
 
-    drawAmbient(stage.fx, stage.w, stage.h, t)
+    quality.update(dt, loop.fps)
+    if (quality.changed) {
+      field.live = quality.particles
+      tracker.detectHz = quality.detectHz
+      stageEl.classList.toggle('perf-low', quality.level <= 0.4)
+    }
+
+    if (quality.ambientGrid) drawAmbient(stage.fx, stage.w, stage.h, t)
 
     if (!hands.length) registry.release(frame)
     registry.update(frame)
@@ -134,6 +143,8 @@ function run(stage: Stage, tracker: HandTracker) {
       activeLabel: registry.active?.label ?? 'STANDBY',
       heldFor: registry.heldFor,
       soundOn: blips.enabled,
+      quality: quality.label,
+      particles: field.live,
     }
     drawHud(frame, modes, state)
     if (debugOn) drawDebug(frame, registry, modes)

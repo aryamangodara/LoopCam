@@ -19,7 +19,10 @@ export class Stage {
   /** CSS pixel size of the stage. All game logic works in these units. */
   w = 0
   h = 0
+  /** Device pixel ratio used for the HUD (text needs the resolution). */
   dpr = 1
+  /** The fx layer is all soft-edged glow — device pixels there buy nothing and cost 4x fill. */
+  fxDpr = 1
 
   /** cover-fit mapping from normalized video coords -> stage px. */
   private scale = 1
@@ -40,18 +43,25 @@ export class Stage {
   }
 
   resize() {
-    // Cap DPR at 2: past that the particle field costs more than it looks better.
-    this.dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const raw = window.devicePixelRatio || 1
+    this.dpr = Math.min(raw, 2)
+    // Hard cap the fx backing store at ~2.1M device pixels (roughly 1080p). Beyond that
+    // the additive fills dominate the frame regardless of how few particles are alive.
     this.w = window.innerWidth
     this.h = window.innerHeight
+    const budget = 2_100_000
+    this.fxDpr = Math.min(1, Math.sqrt(budget / Math.max(1, this.w * this.h)))
 
+    this.fxCanvas.width = Math.round(this.w * this.fxDpr)
+    this.fxCanvas.height = Math.round(this.h * this.fxDpr)
+    this.hudCanvas.width = Math.round(this.w * this.dpr)
+    this.hudCanvas.height = Math.round(this.h * this.dpr)
     for (const c of [this.fxCanvas, this.hudCanvas]) {
-      c.width = Math.round(this.w * this.dpr)
-      c.height = Math.round(this.h * this.dpr)
       c.style.width = `${this.w}px`
       c.style.height = `${this.h}px`
     }
-    this.fx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0)
+
+    this.fx.setTransform(this.fxDpr, 0, 0, this.fxDpr, 0, 0)
     this.hud.setTransform(this.dpr, 0, 0, this.dpr, 0, 0)
     this.computeCover()
   }

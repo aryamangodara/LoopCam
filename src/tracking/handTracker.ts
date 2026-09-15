@@ -38,6 +38,9 @@ export class HandTracker {
   /** Rolling cost of the model call, shown in diagnostics. */
   detectMs = 0
   delegate: 'GPU' | 'CPU' = 'GPU'
+  /** Detections per second. The governor lowers this first when frames get tight. */
+  detectHz = 24
+  private lastDetect = 0
 
   constructor(private stage: Stage) {}
 
@@ -101,12 +104,16 @@ export class HandTracker {
     const video = this.stage.video
     if (!video.videoWidth || video.paused) return
 
+    const now = performance.now()
+    if (now - this.lastDetect < 1000 / this.detectHz) return
+    this.lastDetect = now
+
     // detectForVideo demands strictly increasing timestamps.
-    const ts = Math.max(performance.now(), this.lastTs + 1)
+    const ts = Math.max(now, this.lastTs + 1)
     this.lastTs = ts
 
     let res: HandLandmarkerResult
-    const t0 = performance.now()
+    const t0 = now
     try {
       res = this.landmarker.detectForVideo(video, ts)
     } catch {
